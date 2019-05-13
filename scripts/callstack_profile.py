@@ -77,9 +77,9 @@ result = deblendTask.run(coadds, catalog[idx:idx+1])
 import lsst.afw.table as afwTable
 
 for f in filters:
-    _catalog = afwTable.SourceCatalog(result[f].table.clone())
-    _catalog.extend(result[f], deep=True)
-    result[f] = _catalog
+    _catalog = afwTable.SourceCatalog(result[1][f].table.clone())
+    _catalog.extend(result[1][f], deep=True)
+    result[1][f] = _catalog
 
-print(result["g"]["runtime"])
-print(result["g"]["iterations"])
+print(result[1]["g"]["runtime"])
+print(result[1]["g"]["iterations"])
