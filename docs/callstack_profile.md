@@ -17,3 +17,12 @@ gprof2dot -f pstats callstack_profile.cprof |dot -Tpng -o callstack_profile.png
 
 As a note this command presupposes that dot is installed on your system. If it is not, consult your operating
 system for how best to install it. An example output can be found at images/callstack_profile.png
+
+
+# Profile timing
+|      | No Sym | Sym |
+|------|--------|-----|
+|Before| 1.2s   |6.6s |
+|------|--------|-----|
+|After |1.2s    |1.8s |
+|------|--------|-----|
