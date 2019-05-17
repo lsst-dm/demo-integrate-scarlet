@@ -150,7 +150,7 @@ def cutout_scale(im, num_min=2.0, num_max=5.0):
     return vmin, vmax
 
 
-def make_cutout(filename, RA, DEC, width, nhdu=0, w_units="arcsecs", verbose=False):
+def make_cutout(filename, RA, DEC, width, height, nhdu=0, w_units="arcsecs", verbose=False):
 
     """
     Makes cutouts from a file passed as either a filename or hdulist
@@ -197,21 +197,22 @@ def make_cutout(filename, RA, DEC, width, nhdu=0, w_units="arcsecs", verbose=Fal
         w = wcs.WCS(hdr, naxis=2)
 
         if w_units == "arcsecs":
-            width = width/3600.0/2.0
-            w_coord = np.array([[RA - width/np.cos(np.deg2rad(DEC)), DEC - width], [RA + width/np.cos(np.deg2rad(DEC)), DEC + width]], np.float_)
+            width = width/3600./2.
+            height = height/3600./2.
+            w_coord = np.array([[RA - width/np.cos(np.deg2rad(DEC)), DEC - height], [RA + width/np.cos(np.deg2rad(DEC)), DEC + height]], np.float_)
             pix_coord = w.wcs_world2pix(w_coord, 1, ra_dec_order=True)
             coords = [int(pix_coord[0][0]), int(pix_coord[0][1]), int(pix_coord[1][0]), int(pix_coord[1][1])]
             test_coord = w.wcs_pix2world(test_pix, 1, ra_dec_order=True)
-            test_edges = np.array([[test_coord[0][0], test_coord[0][1] - width],
-                                  [test_coord[0][0], test_coord[0][1] + width]], np.float_)
+            test_edges = np.array([[test_coord[0][0], test_coord[0][1] - height],
+                                  [test_coord[0][0], test_coord[0][1] + height]], np.float_)
             test_pix = w.wcs_world2pix(test_edges, 1, ra_dec_order=True)
             [[tx1, ty1], [tx2, ty2]] = test_pix
 
         elif w_units == "pixels":
             w_coord = np.array([[RA, DEC]], np.float_)
             pix_coord = w.wcs_world2pix(w_coord, 1)
-            [tx1, ty1, tx2, ty2] = [int(pix_coord[0][0]+width/2.0), int(pix_coord[0][1]-width/2.0),
-                                    int(pix_coord[0][0]-width/2.0), int(pix_coord[0][1]+width/2.0)]
+            [tx1, ty1, tx2, ty2] = [int(pix_coord[0][0]+width/2.0), int(pix_coord[0][1]-height/2.0),
+                                    int(pix_coord[0][0]-width/2.0), int(pix_coord[0][1]+height/2.0)]
         else:
             raise ValueError('Unknown units ' + w_units)
     except (UnboundLocalError, wcs.wcs.InconsistentAxisTypesError) as e:
@@ -324,7 +325,7 @@ def make_cutout(filename, RA, DEC, width, nhdu=0, w_units="arcsecs", verbose=Fal
     return hdulist, im_status
 
 
-def cutout_HST(RA, DEC, sigma=0, width=30.0, return_data=False,
+def cutout_HST(RA, DEC, sigma=0, width=None, height=None, return_data=False,
                path=os.path.join(os.path.sep, 'project', 'sr525', 'hstCosmosImages'),
                filecorner=None):
 
@@ -335,6 +336,12 @@ def cutout_HST(RA, DEC, sigma=0, width=30.0, return_data=False,
     Can also return just the array used to make the image and the scaling parameters
     sigma applies a gaussian filter
     """
+    if width is None and height is None:
+        width, height = 30., 30.
+    elif height is None:
+        height = width
+    elif width is None:
+        width = height
 
     import astropy.io.fits as fits
     import matplotlib.pyplot as plt
@@ -354,7 +361,7 @@ def cutout_HST(RA, DEC, sigma=0, width=30.0, return_data=False,
             if ra_min < RA < ra_max and dec_min < DEC < dec_max:
                 print(filename)
                 with fits.open(filename[:-1]) as h:
-                    hdulist, im_status = make_cutout(h, RA, DEC, width, nhdu=0)
+                    hdulist, im_status = make_cutout(h, RA, DEC, width, height, nhdu=0)
                     im = hdulist[1].data
                     vmin, vmax = cutout_scale(im)
                     if sigma > 0:
